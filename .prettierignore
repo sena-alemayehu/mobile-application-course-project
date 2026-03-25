@@ -1,0 +1,5 @@
+node_modules
+dist
+build
+apps/api/build
+**/*.java

@@ -1,0 +1,15 @@
+{
+  "name": "@workspace/types",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "gen": "openapi-typescript http://localhost:8080/api-docs --output src/index.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}
