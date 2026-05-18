@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:movie_watchlist/features/movies/data/models/movie_model.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/genre.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/movie_filters.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/movie_page.dart';
+import 'package:mobile/features/movies/data/models/movie_model.dart';
+import 'package:mobile/features/movies/domain/entities/genre.dart';
+import 'package:mobile/features/movies/domain/entities/movie_filters.dart';
+import 'package:mobile/features/movies/domain/entities/movie_page.dart';
 
 class TmdbRemoteDataSource {
   Future<MoviePage> searchMovies({

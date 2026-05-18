@@ -1,5 +1,5 @@
-import 'package:movie_watchlist/shared/models/movie.dart';
-import 'package:movie_watchlist/shared/models/tv_show.dart';
+import 'package:mobile/shared/models/movie.dart';
+import 'package:mobile/shared/models/tv_show.dart';
 
 class LegacyTmdbRepository {
   final List<Movie> _mockMovies = [

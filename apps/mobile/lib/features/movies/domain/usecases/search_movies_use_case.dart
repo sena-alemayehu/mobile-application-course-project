@@ -1,6 +1,6 @@
-import 'package:movie_watchlist/features/movies/domain/entities/movie_filters.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/movie_page.dart';
-import 'package:movie_watchlist/features/movies/domain/repositories/movie_repository.dart';
+import 'package:mobile/features/movies/domain/entities/movie_filters.dart';
+import 'package:mobile/features/movies/domain/entities/movie_page.dart';
+import 'package:mobile/features/movies/domain/repositories/movie_repository.dart';
 
 class SearchMoviesUseCase {
   const SearchMoviesUseCase(this._repository);

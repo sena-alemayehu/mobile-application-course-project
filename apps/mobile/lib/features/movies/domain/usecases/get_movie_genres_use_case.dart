@@ -1,5 +1,5 @@
-import 'package:movie_watchlist/features/movies/domain/entities/genre.dart';
-import 'package:movie_watchlist/features/movies/domain/repositories/movie_repository.dart';
+import 'package:mobile/features/movies/domain/entities/genre.dart';
+import 'package:mobile/features/movies/domain/repositories/movie_repository.dart';
 
 class GetMovieGenresUseCase {
   const GetMovieGenresUseCase(this._repository);

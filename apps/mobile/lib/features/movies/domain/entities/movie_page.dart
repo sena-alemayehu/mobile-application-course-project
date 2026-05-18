@@ -1,4 +1,4 @@
-import 'package:movie_watchlist/features/movies/domain/entities/movie.dart';
+import 'package:mobile/features/movies/domain/entities/movie.dart';
 
 class MoviePage {
   const MoviePage({

@@ -1,8 +1,8 @@
-import 'package:movie_watchlist/features/movies/data/datasources/tmdb_remote_data_source.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/genre.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/movie_filters.dart';
-import 'package:movie_watchlist/features/movies/domain/entities/movie_page.dart';
-import 'package:movie_watchlist/features/movies/domain/repositories/movie_repository.dart';
+import 'package:mobile/features/movies/data/datasources/tmdb_remote_data_source.dart';
+import 'package:mobile/features/movies/domain/entities/genre.dart';
+import 'package:mobile/features/movies/domain/entities/movie_filters.dart';
+import 'package:mobile/features/movies/domain/entities/movie_page.dart';
+import 'package:mobile/features/movies/domain/repositories/movie_repository.dart';
 
 class MovieRepositoryImpl implements MovieRepository {
   MovieRepositoryImpl({required TmdbRemoteDataSource remoteDataSource})

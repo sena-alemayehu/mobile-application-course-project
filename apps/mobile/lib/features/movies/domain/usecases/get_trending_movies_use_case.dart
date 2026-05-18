@@ -1,12 +1,12 @@
-import 'package:movie_watchlist/features/movies/domain/entities/movie_page.dart';
-import 'package:movie_watchlist/features/movies/domain/repositories/movie_repository.dart';
+import 'package:mobile/features/movies/domain/entities/genre.dart';
+import 'package:mobile/features/movies/domain/repositories/movie_repository.dart';
 
-class GetTrendingMoviesUseCase {
-  const GetTrendingMoviesUseCase(this._repository);
+class GetMovieGenresUseCase {
+  const GetMovieGenresUseCase(this._repository);
 
   final MovieRepository _repository;
 
-  Future<MoviePage> call(int page) {
-    return _repository.getTrendingMovies(page);
+  Future<List<Genre>> call() {
+    return _repository.getGenres();
   }
 }
