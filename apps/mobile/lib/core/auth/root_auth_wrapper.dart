@@ -1,30 +1,43 @@
 
-
 import 'package:flutter/material.dart';
-import 'package:movie_watchlist/features/auth/presentation/screens/login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 
-/// Simple auth wrapper - shows login screen if not logged in.
-
-class RootAuthWrapper extends StatelessWidget {
-  final bool isLoggedIn;
-
-  const RootAuthWrapper({super.key, this.isLoggedIn = false});
+class RootAuthWrapper extends ConsumerWidget {
+  const RootAuthWrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    if (isLoggedIn) {
-      
-      return const Scaffold(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authStateAsync = ref.watch(authStateProvider);
+
+    return authStateAsync.when(
+      data: (user) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (user != null) {
+            context.go('/home');
+          } else {
+            context.go('/login');
+          }
+        });
+        return const Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(child: CircularProgressIndicator(color: Colors.red)),
+        );
+      },
+      loading: () => const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator(color: Colors.red)),
+      ),
+      error: (error, _) => Scaffold(
         backgroundColor: Colors.black,
         body: Center(
           child: Text(
-            'Home Screen (Coming Soon)',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            'Error: $error',
+            style: const TextStyle(color: Colors.red),
           ),
         ),
-      );
-    }
-
-    return const LoginScreen();
+      ),
+    );
   }
 }

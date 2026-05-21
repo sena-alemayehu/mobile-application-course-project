@@ -1,5 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const _kOnboardingCompleteKey = 'onboarding_complete';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -36,6 +40,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  Future<void> _complete() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOnboardingCompleteKey, true);
+    if (mounted) context.go('/login');
+  }
+
   void _next() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
@@ -43,7 +53,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      _complete();
     }
   }
 
@@ -56,15 +66,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip button
             Align(
               alignment: Alignment.topRight,
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, right: 8),
                 child: TextButton(
-                  // TODO v2: Replace with GoRouter context.go('/login')
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/login'),
+                  onPressed: _complete,
                   child: const Text(
                     'Skip',
                     style: TextStyle(color: Colors.grey),
@@ -72,8 +79,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
-            // Pages
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -82,8 +87,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (_, i) => _pages[i],
               ),
             ),
-
-            // Dots + button
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               child: Column(

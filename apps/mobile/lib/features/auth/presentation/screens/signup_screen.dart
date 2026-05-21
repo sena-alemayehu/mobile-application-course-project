@@ -1,20 +1,22 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authNotifier = AuthNotifier();
-  String? _error;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,29 +27,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _signUp() async {
-    setState(() => _error = null);
-
-    if (_emailController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
-      setState(() => _error = 'Please fill in all fields');
-      return;
-    }
-
     if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() => _error = 'Passwords do not match');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
       return;
     }
 
-    final success = await _authNotifier.signUp(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
-
-    if (success && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      setState(() => _error = 'Sign up failed. Please try again.');
+    setState(() => _isLoading = true);
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.signUpWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      // GoRouter redirect reacts to auth state change automatically
+    } on FirebaseAuthException catch (e) {
+      // TODO v3: Map each error code to a user-friendly message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Sign up failed')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -78,15 +81,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Join the movie community',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                ),
                 const SizedBox(height: 40),
 
-                // Email
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -102,7 +98,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
@@ -118,7 +113,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Confirm Password
                 TextField(
                   controller: _confirmPasswordController,
                   obscureText: true,
@@ -132,52 +126,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     border: OutlineInputBorder(borderSide: BorderSide.none),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
 
-                // Error message
-                if (_error != null)
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.red, fontSize: 13),
-                    textAlign: TextAlign.center,
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _signUp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                const SizedBox(height: 16),
-
-                // Sign Up button
-                ListenableBuilder(
-                  listenable: _authNotifier,
-                  builder: (context, _) {
-                    return ElevatedButton(
-                      onPressed: _authNotifier.isLoading ? null : _signUp,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Sign Up',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
-                      ),
-                      child: _authNotifier.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 16),
 
-                // Go to Sign In
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -186,8 +161,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     GestureDetector(
-                      // TODO v2: Replace with GoRouter context.go('/login')
-                      onTap: () => Navigator.pushNamed(context, '/login'),
+                      onTap: () => context.go('/login'),
                       child: const Text(
                         'Sign In',
                         style: TextStyle(

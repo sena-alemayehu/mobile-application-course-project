@@ -1,6 +1,6 @@
 
-
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -12,7 +12,6 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
-  bool _emailSent = false;
 
   @override
   void dispose() {
@@ -29,13 +28,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
 
     setState(() => _isLoading = true);
-
-    await Future.delayed(const Duration(milliseconds: 800)); // simulate network
-
-    setState(() {
-      _isLoading = false;
-      _emailSent = true;
-    });
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: _emailController.text.trim(),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset email sent'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // TODO v3: Map each error code to a user-friendly message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'An error occurred')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -66,67 +80,46 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Enter your email and we'll send you a reset link.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 14, height: 1.5),
-                ),
                 const SizedBox(height: 40),
 
-                if (_emailSent)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: 'Email',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
+                    filled: true,
+                    fillColor: Color(0xFF1E1E1E),
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _sendResetEmail,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green),
-                    ),
-                    child: const Text(
-                      '✓ Reset email sent! Check your inbox.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.green),
-                    ),
-                  )
-                else ...[
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Email',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
-                      filled: true,
-                      fillColor: Color(0xFF1E1E1E),
-                      border: OutlineInputBorder(borderSide: BorderSide.none),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _sendResetEmail,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Send Reset Email',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
-                  ),
-                ],
+                        )
+                      : const Text(
+                          'Send Reset Email',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                ),
               ],
             ),
           ),

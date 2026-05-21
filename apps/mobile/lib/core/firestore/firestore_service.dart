@@ -1,27 +1,30 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-/// Mock Firestore service - returns hardcoded data, no real database.
 class FirestoreService {
- 
-  final List<Map<String, dynamic>> _mockWatchlist = [
-    {'movieId': '1', 'title': 'Inception', 'addedAt': '2024-01-01'},
-    {'movieId': '2', 'title': 'The Dark Knight', 'addedAt': '2024-01-02'},
-  ];
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
+  FirestoreService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
-  
-  List<Map<String, dynamic>> getWatchlist() {
-    return _mockWatchlist;
+  CollectionReference? getWatchlistCollection() {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return _firestore.collection('users').doc(user.uid).collection('watchlist');
   }
 
   Future<void> addToWatchlist(int movieId, Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _mockWatchlist.add({'movieId': movieId.toString(), ...data});
+    final collection = getWatchlistCollection();
+    if (collection == null) throw Exception('User not signed in');
+    await collection.doc(movieId.toString()).set(data);
   }
 
-  
   Future<void> removeFromWatchlist(int movieId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _mockWatchlist.removeWhere((item) => item['movieId'] == movieId.toString());
+    final collection = getWatchlistCollection();
+    if (collection == null) throw Exception('User not signed in');
+    await collection.doc(movieId.toString()).delete();
   }
 }

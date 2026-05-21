@@ -1,20 +1,21 @@
 
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authNotifier = AuthNotifier();
-  String? _error;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,23 +25,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signIn() async {
-    setState(() => _error = null);
-
-    // Basic validation
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      setState(() => _error = 'Please fill in all fields');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
       return;
     }
 
-    final success = await _authNotifier.signIn(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
-
-    if (success && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      setState(() => _error = 'Login failed. Please try again.');
+    setState(() => _isLoading = true);
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.signInWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      // GoRouter redirect reacts to auth state change automatically
+    } on FirebaseAuthException catch (e) {
+      // TODO v3: Map each error code to a user-friendly message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Login failed')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -56,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo
                 const Icon(Icons.movie, size: 80, color: Colors.red),
                 const SizedBox(height: 16),
                 const Text(
@@ -68,15 +75,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sign in to continue',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                ),
                 const SizedBox(height: 40),
 
-                // Email field
+                // Email
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -92,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password field
+                // Password
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
@@ -108,50 +109,45 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Error message
-                if (_error != null)
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.red, fontSize: 13),
-                    textAlign: TextAlign.center,
+                // Forgot password
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => context.push('/forgot-password'),
+                    child: const Text(
+                      'Forgot password?',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
-                const SizedBox(height: 16),
-
-                // Sign In button
-                ListenableBuilder(
-                  listenable: _authNotifier,
-                  builder: (context, _) {
-                    return ElevatedButton(
-                      onPressed: _authNotifier.isLoading ? null : _signIn,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _authNotifier.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Sign In',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 16),
 
-                // Go to Sign Up
+                // Sign In button
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _signIn,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Sign In',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                ),
+                const SizedBox(height: 16),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -160,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/signup'),
+                      onTap: () => context.go('/signup'),
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(

@@ -1,55 +1,23 @@
 
-
-import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/auth/auth_repository.dart';
 
-/// Simple auth state notifier - no Firebase in v1.
-class AuthNotifier extends ChangeNotifier {
-  final AuthRepository _authRepository = MockAuthRepository();
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
+  return FirebaseAuth.instance;
+});
 
-  bool _isLoggedIn = false;
-  bool _isLoading = false;
-  String? _errorMessage;
+final authStateProvider = StreamProvider<User?>((ref) {
+  return FirebaseAuth.instance.authStateChanges();
+});
 
-  bool get isLoggedIn => _isLoggedIn;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final auth = ref.watch(firebaseAuthProvider);
+  return FirebaseAuthRepository(firebaseAuth: auth);
+});
 
-  Future<bool> signIn(String email, String password) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+final authStateChangesProvider = StreamProvider<User?>((ref) {
+  final authRepo = ref.watch(authRepositoryProvider);
+  return authRepo.authStateChanges;
+});
 
-    final success = await _authRepository.signInWithEmailAndPassword(
-      email,
-      password,
-    );
-
-    _isLoggedIn = success;
-    _isLoading = false;
-    notifyListeners();
-    return success;
-  }
-
-  Future<bool> signUp(String email, String password) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    final success = await _authRepository.signUpWithEmailAndPassword(
-      email,
-      password,
-    );
-
-    _isLoggedIn = success;
-    _isLoading = false;
-    notifyListeners();
-    return success;
-  }
-
-  Future<void> signOut() async {
-    await _authRepository.signOut();
-    _isLoggedIn = false;
-    notifyListeners();
-  }
-}

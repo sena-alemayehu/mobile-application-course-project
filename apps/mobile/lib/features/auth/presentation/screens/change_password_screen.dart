@@ -1,6 +1,6 @@
 
-
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -24,15 +24,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   Future<void> _changePassword() async {
-    if (_currentPasswordController.text.isEmpty ||
-        _newPasswordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
-      return;
-    }
-
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Passwords do not match')),
@@ -41,19 +32,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
 
     setState(() => _isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null || user.email == null) throw Exception('Not signed in');
 
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    setState(() => _isLoading = false);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password changed successfully.'),
-          backgroundColor: Colors.green,
-        ),
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: _currentPasswordController.text.trim(),
       );
-      Navigator.of(context).pop();
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(_newPasswordController.text.trim());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password changed successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } on FirebaseAuthException catch (e) {
+      // TODO v3: Map each error code to a user-friendly message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'An error occurred')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -85,7 +92,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Current Password
             TextField(
               controller: _currentPasswordController,
               obscureText: true,
@@ -101,7 +107,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             ),
             const SizedBox(height: 16),
 
-            // New Password
             TextField(
               controller: _newPasswordController,
               obscureText: true,
@@ -117,7 +122,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Confirm New Password
             TextField(
               controller: _confirmPasswordController,
               obscureText: true,
