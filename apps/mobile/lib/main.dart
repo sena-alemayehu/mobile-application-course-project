@@ -1,5 +1,11 @@
-// lib/main.dart
+
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/app/router/app_router.dart';
+import 'package:mobile/firebase_options.dart';
 
 import 'home.dart';
 
@@ -7,12 +13,10 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     return MaterialApp(
       title: 'Movie Watchlist',
       theme: ThemeData.dark(),
@@ -21,8 +25,9 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +39,15 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(fontSize: 24),
         ),
       ),
-=======
-    return const MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      home: MovieScreen(), //
->>>>>>> f236539c51e034541c3606303ea481e2b45b04ba
+      title: 'Movie Watchlist',
+      theme: AppTheme.darkTheme,
+      routerConfig: router,
+main
     );
   }
 }
