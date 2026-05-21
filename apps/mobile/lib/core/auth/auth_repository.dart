@@ -1,31 +1,46 @@
 
+import 'package:firebase_auth/firebase_auth.dart';
 
-/// Abstract contract for authentication operations.
 abstract class AuthRepository {
-  Future<bool> signInWithEmailAndPassword(String email, String password);
-  Future<bool> signUpWithEmailAndPassword(String email, String password);
+  Stream<User?> get authStateChanges;
+  Future<User?> signInWithEmailAndPassword(String email, String password);
+  Future<User?> signUpWithEmailAndPassword(String email, String password);
   Future<void> signOut();
 }
 
-/// Mock implementation - always succeeds, no real auth.
-class MockAuthRepository implements AuthRepository {
+class FirebaseAuthRepository implements AuthRepository {
+  final FirebaseAuth _firebaseAuth;
+
+  FirebaseAuthRepository({FirebaseAuth? firebaseAuth})
+    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+
   @override
-  Future<bool> signInWithEmailAndPassword(String email, String password) async {
-   
-    await Future.delayed(const Duration(milliseconds: 500));
-    return true; 
+  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
+  @override
+  Future<User?> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    final credential = await _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return credential.user;
   }
 
   @override
-  Future<bool> signUpWithEmailAndPassword(String email, String password) async {
-   
-    await Future.delayed(const Duration(milliseconds: 500));
-    return true;
+  Future<User?> signUpWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return credential.user;
   }
 
   @override
-  Future<void> signOut() async {
-    
-    await Future.delayed(const Duration(milliseconds: 200));
-  }
+  Future<void> signOut() => _firebaseAuth.signOut();
 }
