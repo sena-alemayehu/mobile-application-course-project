@@ -1,10 +1,29 @@
 class ServerException implements Exception {
   final String message;
-  ServerException(this.message);
+  final int? statusCode;
+
+  ServerException(this.message, {this.statusCode});
+
+  @override
+  String toString() => 'ServerException: $message (status: $statusCode)';
 }
 
-/// Simple cache exception.
+/// Cache exception.
 class CacheException implements Exception {
   final String message;
+
   CacheException(this.message);
+
+  @override
+  String toString() => 'CacheException: $message';
+}
+
+/// Network exception.
+class NetworkException implements Exception {
+  final String message;
+
+  NetworkException(this.message);
+
+  @override
+  String toString() => 'NetworkException: $message';
 }

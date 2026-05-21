@@ -1,36 +1,38 @@
 // lib/main.dart
-import 'package:flutter/material.dart';
+// VERSION 2 - MaterialApp with GoRouter and Firebase initialization.
 
-void main() {
-  runApp(const MyApp());
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/app/router/app_router.dart';
+import 'package:mobile/firebase_options.dart';
+
+/// App entry point with Firebase and Riverpod.
+/// TODO v3: Add splash screen, localization, deep links
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+/// Root app widget with GoRouter.
+/// TODO v3: Add localization delegates, custom scroll behavior
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'Movie Watchlist',
-      theme: ThemeData.dark(),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Movie Watchlist')),
-      body: const Center(
-        child: Text(
-          'Welcome to Movie Watchlist!',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
+      theme: AppTheme.darkTheme,
+      routerConfig: router,
     );
   }
 }
